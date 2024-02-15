@@ -51,11 +51,6 @@ fn main() {
             eprintln!("Invalid filter type. Acceptable options as Gain or Delay.");
             return;
         }
-        // Ok(delay) => comb_filter::FilterParam::Delay,
-        // Err(_) => {
-        //     eprintln!("Invalid max delay value. Floating point number required.");
-        //     return;
-        // }
     }; 
 
     // Command line filter parameter argument 
