@@ -90,19 +90,20 @@ impl RingBuffer<f32> {
     // To handle fractional offsets, linearly interpolate between adjacent values. 
 
     pub fn get_frac(&self, offset: f32) -> f32 {
+        // Retrieve self variables from other RingBuffer <T> method 
+        let curr_read = self.get_read_index();
+
         // Calculate integer and fractional part of offset
-        let i_offset = offset.floor();
-        let f_offset = offset - i_offset;
+        let index = curr_read as f32 + offset;
+        let m_samp = index.floor() as usize;
+        let f_delay = index - m_samp as f32;
 
-        // Determine indices and values for linear interpolation
-        let init_index = (i_offset) as usize;
-        let next_index = (init_index + 1) % self.capacity();
-
-        let init_value = self.buffer[init_index];
-        let next_value = self.buffer[next_index];
+        // Determine indices and values for linear interpolation based Zolzer implementation
+        let init_value = self.buffer[m_samp % self.capacity()];
+        let next_value = self.buffer[(m_samp + 1) % self.capacity()];
 
         // Return value is the linear interpolation of the two closes buffer entries
-        let inter_value = init_value * (1.0 - f_offset) + next_value * f_offset;
+        let inter_value = init_value * (1.0 - f_delay) + next_value * f_delay;
 
         inter_value
     }
@@ -234,11 +235,12 @@ mod tests {
         }
 
         // Retrieve interpolated value at offset with current read index 
-        ring_buff.set_read_index(5);
-        let inter_value = ring_buff.get_frac(5.6);
+        ring_buff.set_read_index(2);
+
+        let inter_value = ring_buff.get_frac(2.5);
 
         // Test whether interpolated value at offset matches expectations
-        // Expect (value 5 (5.0) + value 6 (6.0)) / 2 = 5.5
-        assert_eq!(inter_value, 5.6);
+        // Expect (value 5 (4.0) + value 6 (5.0)) / 2 = 4.5
+        assert_eq!(inter_value, 4.5);
     }
 }
