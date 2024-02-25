@@ -81,21 +81,18 @@ impl RingBuffer<f32> {
     pub fn get_frac(&self, offset: f32) -> f32 {
         // Retrieve self variables from other RingBuffer <T> method 
         let curr_read = self.get_read_index();
-        let buff_capacity = self.capacity() as f32;
 
         // Calculate integer and fractional part of offset
-        let i_offset = offset.floor();
-        let f_offset = offset - i_offset;
+        let index = curr_read as f32 + offset;
+        let m_samp = index.floor() as usize;
+        let f_delay = index - m_samp as f32;
 
-        // Determine indices and values for linear interpolation
-        let init_index = (curr_read as f32 + i_offset) as usize;
-        let next_index = (init_index + 1) % self.capacity();
-
-        let init_value = self.buffer[init_index];
-        let next_value = self.buffer[next_index];
+        // Determine indices and values for linear interpolation based Zolzer implementation
+        let init_value = self.buffer[m_samp % self.capacity()];
+        let next_value = self.buffer[(m_samp + 1) % self.capacity()];
 
         // Return value is the linear interpolation of the two closes buffer entries
-        let inter_value = init_value * (1.0 - f_offset) + next_value * f_offset;
+        let inter_value = init_value * (1.0 - f_delay) + next_value * f_delay;
 
         inter_value
     }
