@@ -24,6 +24,16 @@ impl<T: Copy + Default> RingBuffer<T> {
         self.buffer[self.head] = value
     }
 
+/// Peaks allows you to look into the ring buffer at tail index without advancing the indices.
+/// # Example
+/// ```
+/// let rb = RingBuffer::new(10);
+/// rb.peek();
+/// #[test]
+/// fn peek_test() {
+///     assert_eq!(rb.get(9), 2);
+///}
+/// ```
     pub fn peek(&self) -> T {
         self.buffer[self.tail]
     }
@@ -78,8 +88,27 @@ impl<T: Copy + Default> RingBuffer<T> {
 impl RingBuffer<f32> {
     // Return the value at at an offset from the current read index.
     // To handle fractional offsets, linearly interpolate between adjacent values. 
+
     pub fn get_frac(&self, offset: f32) -> f32 {
-        todo!("implement")
+        // Retrieve self variables from other RingBuffer <T> method 
+        let curr_read = self.get_read_index();
+        let buff_capacity = self.capacity() as f32;
+
+        // Calculate integer and fractional part of offset
+        let i_offset = offset.floor();
+        let f_offset = offset - i_offset;
+
+        // Determine indices and values for linear interpolation
+        let init_index = (curr_read as f32 + i_offset) as usize;
+        let next_index = (init_index + 1) % self.capacity();
+
+        let init_value = self.buffer[init_index];
+        let next_value = self.buffer[next_index];
+
+        // Return value is the linear interpolation of the two closes buffer entries
+        let inter_value = init_value * (1.0 - f_offset) + next_value * f_offset;
+
+        inter_value
     }
 }
 
