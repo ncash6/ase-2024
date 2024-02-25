@@ -90,16 +90,12 @@ impl RingBuffer<f32> {
     // To handle fractional offsets, linearly interpolate between adjacent values. 
 
     pub fn get_frac(&self, offset: f32) -> f32 {
-        // Retrieve self variables from other RingBuffer <T> method 
-        let curr_read = self.get_read_index();
-        let buff_capacity = self.capacity() as f32;
-
         // Calculate integer and fractional part of offset
         let i_offset = offset.floor();
         let f_offset = offset - i_offset;
 
         // Determine indices and values for linear interpolation
-        let init_index = (curr_read as f32 + i_offset) as usize;
+        let init_index = (i_offset) as usize;
         let next_index = (init_index + 1) % self.capacity();
 
         let init_value = self.buffer[init_index];
@@ -224,5 +220,25 @@ mod tests {
         assert_eq!(ring_buffer.get_read_index(), 3);
 
         // NOTE: Negative indices are also weird, but we can't even pass them due to type checking!
+    }
+
+    // Test 0: RingBuffer Fractinal Delay matches expected outcome
+    #[test]
+    fn test_fractional_delay() {
+        // Set initial state of ring buffer with capacity of 10
+        let mut ring_buff = RingBuffer::new(10);
+
+        // Push values into ring buffer
+        for i in 0..10 {
+            ring_buff.push(i as f32);
+        }
+
+        // Retrieve interpolated value at offset with current read index 
+        ring_buff.set_read_index(5);
+        let inter_value = ring_buff.get_frac(5.6);
+
+        // Test whether interpolated value at offset matches expectations
+        // Expect (value 5 (5.0) + value 6 (6.0)) / 2 = 5.5
+        assert_eq!(inter_value, 5.6);
     }
 }

@@ -1,6 +1,7 @@
 // The user-interface for this vibrato.rs file is modelled after the comb_filter.rs
 // written by Stephen Garrett & Ian Clester for MUSI 6106 Assignment 1.
 
+// use seconds and Hz instead of samples where appropriate
 pub struct Vibrato {
     // TODO: your code here
 }
@@ -46,4 +47,8 @@ impl Vibrato {
     // TODO: feel free to define other functions for your own use
 }
 
-// TODO: feel free to define other types (here or in other modules) for your own use
+// Vibrato Unit Tests
+mod tests {
+    use super::*;
+
+}
