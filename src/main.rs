@@ -70,7 +70,7 @@ fn main() {
         vibrato.process(&in_slice, &mut out_slice);
 
         // Write processed audio to text file
-        for ch in &out_buffer {
+        for ch in &out_slice {
             for  &out_sample in ch.iter() {
                 let out_samp_i16 = (out_sample * (1 << 15) as f32) as i16;
                 out.write_sample(out_samp_i16).unwrap(); 
