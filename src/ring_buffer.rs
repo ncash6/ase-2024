@@ -27,6 +27,7 @@ impl<T: Copy + Default> RingBuffer<T> {
 /// Peaks allows you to look into the ring buffer at tail index without advancing the indices.
 /// # Example
 /// ```
+/// use ring_buffer::RingBuffer;
 /// let rb = RingBuffer::new(10);
 /// rb.peek();
 /// #[test]
