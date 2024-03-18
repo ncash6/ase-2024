@@ -22,7 +22,7 @@ fn main() {
     let spec = reader.spec();
     let channels = spec.channels; // number of channels in input file
 
-    // TODO: Modify this to process audio in blocks using your comb filter and write the result to an audio file.
+    // Audio processed in blocks using comb filter and wrote result to an audio file
 
     // Define block size
     let block_size = 1024;
@@ -48,7 +48,7 @@ fn main() {
         "Gain" => comb_filter::FilterParam::Gain,
         "Delay" => comb_filter::FilterParam::Delay,
         _ => {
-            eprintln!("Invalid filter type. Acceptable options as Gain or Delay.");
+            eprintln!("Invalid parameter. Acceptable options as Gain or Delay.");
             return;
         }
     }; 
@@ -72,11 +72,17 @@ fn main() {
     // Instantiate CombFilter
     let mut comb_filter = comb_filter::CombFilter::new(comb_filter_type, max_delay, sample_rate, channels as usize);
     
+    // Command line arguments change filter parameters, values
+    match comb_filter_parameter {
+        comb_filter::FilterParam::Gain => comb_filter.set_param(comb_filter_parameter, comb_filter_value),
+        comb_filter::FilterParam::Delay => comb_filter.set_param(comb_filter_parameter, comb_filter_value),
+    };
 
     // Store wave file audio samples in buffer
     let mut in_buffer =  vec![0.0; block_size * channels as usize];
     let mut out_buffer = vec![0.0; block_size * channels as usize];
     
+    in_buffer.clear();
     while let Some(samp_read) = reader.samples::<i16>().next() {
         let samp: i16 = match samp_read {
             Ok(samp) => samp,
@@ -91,10 +97,38 @@ fn main() {
             in_buffer[n] = samp as f32 / std::i16::MAX as f32;
         }
 
+        // Check if buffer is full
+        if in_buffer.len() == block_size * channels as usize {
+            // Block audio and process using comb filter
+            for chnl in 0..channels {
+                let start_indx = chnl as usize * block_size;
+                let end_indx = (chnl as usize + 1) * block_size;
+                let in_chnl = &in_buffer[start_indx..end_indx];
+                let out_chnl = &mut out_buffer[start_indx..end_indx];
+                comb_filter.process(&[in_chnl], &mut[out_chnl]);
+            }
+
+            // Write processed block to wave file
+            for ob in &out_buffer {
+                let out_samp = (*ob * std::i16::MAX as f32) as i16; // Denormalization
+                if let Err(err)= writer.write_sample(out_samp) {
+                    eprintln!("Error wrinting sample to wave file: {}", err);
+                    return;
+                }
+            }
+            // Empty buffer and reset length
+            in_buffer.clear()
+        }
+    }
+
+    // Check if buffer is full to process remaining samples (edge case)
+    if in_buffer.len() != 0 {
         // Block audio and process using comb filter
         for chnl in 0..channels {
+            // Remaining samples in buffer
+            let samp_left = block_size * channels as usize- in_buffer.capacity();
             let start_indx = chnl as usize * block_size;
-            let end_indx = (chnl as usize + 1) * block_size;
+            let end_indx = (chnl as usize + 1) * samp_left;
             let in_chnl = &in_buffer[start_indx..end_indx];
             let out_chnl = &mut out_buffer[start_indx..end_indx];
             comb_filter.process(&[in_chnl], &mut[out_chnl]);
@@ -108,6 +142,8 @@ fn main() {
                 return;
             }
         }
+        // Empty buffer and reset length
+        in_buffer.clear()
     }
 
     // Read audio data and write it to the output text file (one column per channel)

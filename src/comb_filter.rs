@@ -1,5 +1,4 @@
 pub struct CombFilter {
-    // TODO: your code here
     delay_len: usize,
     delay_line: Vec<Vec<f32>>,
     filter_coefficients: Vec<f64>,
@@ -70,7 +69,7 @@ impl CombFilter {
                         // FIR difference equation
                         for n in 0..filter_coeff_length {
                             if samp >= n {
-                                out_del_sample += in_channel[samp - n] * (self.filter_coefficients[n] as f32);
+                                out_del_sample += in_channel[samp - n] + self.feedback * (self.filter_coefficients[n] as f32);
                             }
                         }
                         output[channel][samp] = out_del_sample;
@@ -102,7 +101,6 @@ impl CombFilter {
                 }
             }   
         }
-        todo!();
     }
 
     pub fn set_param(&mut self, param: FilterParam, value: f32) -> Result<(), Error> {
@@ -136,16 +134,12 @@ impl CombFilter {
             }
         }
     }
-    
-    // TODO: feel free to define other functions for your own use
 }
 
-// Define code behavior tests here
+// Code behavior tests 
 
 #[cfg(test)]
 mod tests{
-    // use core::num;
-
     use super::*;
 
     // Test 1: FIR - Output is zero if input freq matches feedforward
@@ -366,7 +360,5 @@ mod tests{
         // Test for get parameter function
         assert_eq!(choose_comb_filter.get_param(FilterParam::Delay), (max_delay * sample_rate));
         assert_eq!(choose_comb_filter.get_param(FilterParam::Gain), 0.5);
-
-
     }
 }
