@@ -24,6 +24,17 @@ impl<T: Copy + Default> RingBuffer<T> {
         self.buffer[self.head] = value
     }
 
+/// Peaks allows you to look into the ring buffer at tail index without advancing the indices.
+/// # Example
+/// ```
+/// use ring_buffer::RingBuffer;
+/// let rb = RingBuffer::new(10);
+/// rb.peek();
+/// #[test]
+/// fn peek_test() {
+///     assert_eq!(rb.get(9), 2);
+///}
+/// ```
     pub fn peek(&self) -> T {
         self.buffer[self.tail]
     }
@@ -78,8 +89,24 @@ impl<T: Copy + Default> RingBuffer<T> {
 impl RingBuffer<f32> {
     // Return the value at at an offset from the current read index.
     // To handle fractional offsets, linearly interpolate between adjacent values. 
+
     pub fn get_frac(&self, offset: f32) -> f32 {
-        todo!("implement")
+        // Retrieve self variables from other RingBuffer <T> method 
+        let curr_read = self.get_read_index();
+
+        // Calculate integer and fractional part of offset
+        let index = curr_read as f32 + offset;
+        let m_samp = index.floor() as usize;
+        let f_delay = index - m_samp as f32;
+
+        // Determine indices and values for linear interpolation based Zolzer implementation
+        let init_value = self.buffer[m_samp % self.capacity()];
+        let next_value = self.buffer[(m_samp + 1) % self.capacity()];
+
+        // Return value is the linear interpolation of the two closes buffer entries
+        let inter_value = init_value * (1.0 - f_delay) + next_value * f_delay;
+
+        inter_value
     }
 }
 
@@ -195,5 +222,26 @@ mod tests {
         assert_eq!(ring_buffer.get_read_index(), 3);
 
         // NOTE: Negative indices are also weird, but we can't even pass them due to type checking!
+    }
+
+    // Test 0: RingBuffer Fractinal Delay matches expected outcome
+    #[test]
+    fn test_fractional_delay() {
+        // Set initial state of ring buffer with capacity of 10
+        let mut ring_buff = RingBuffer::new(10);
+
+        // Push values into ring buffer
+        for i in 0..10 {
+            ring_buff.push(i as f32);
+        }
+
+        // Retrieve interpolated value at offset with current read index 
+        ring_buff.set_read_index(2);
+
+        let inter_value = ring_buff.get_frac(2.5);
+
+        // Test whether interpolated value at offset matches expectations
+        // Expect (value 5 (4.0) + value 6 (5.0)) / 2 = 4.5
+        assert_eq!(inter_value, 4.5);
     }
 }
