@@ -53,7 +53,7 @@ fn main() {
     let mut out = WavWriter::create(&args[2], spec).unwrap();
 
     // Write vibrato processed audio to output text file (one column per channel)
-    for sample in reader.samples::<i16>() {
+    for sample in reader.samples::<i32>() {
         let sample = sample.unwrap() as f32 / (1 << 15) as f32;
 
         // Initialize input and output buffers
