@@ -30,3 +30,4 @@ fn main() {
         write!(out, "{}{}", sample, if i % channels as usize == (channels - 1).into() { "\n" } else { " " }).unwrap();
     }
 }
+// comment
