@@ -118,6 +118,12 @@ impl FastConvolver {
                     let ifft = ifft_plan.plan_fft(combined_len, rustfft::FftDirection::Inverse);
                     ifft.process(&mut signal_blk);
 
+                    // Scaling with FFT length
+                    let scale = 1.0 / (combined_len as f32);
+                    for val in &mut signal_blk {
+                        *val *= Complex::new(scale, 0.0);
+                    }
+
                     // Convolution results stored in output buffer
                     for k in 0..blk_len {
                         output[index_output + 1] = signal_blk[k].re;
