@@ -3,9 +3,9 @@ use rustfft::FftPlanner;
 use rustfft::num_complex::Complex;
 use rustfft::num_traits::Zero;
 
-struct FastConvolver {
+pub struct FastConvolver<'a> {
     n_ir: usize,
-    impulse_response: &'static[f32],
+    impulse_response: &'a[f32],
     mode: ConvolutionMode,
 }
 
@@ -15,8 +15,8 @@ pub enum ConvolutionMode {
     FrequencyDomain { block_size: usize },
 }
 
-impl FastConvolver {
-    pub fn new(impulse_response: &'static[f32], mode: ConvolutionMode) -> Self {
+impl<'a> FastConvolver<'a> {
+    pub fn new(impulse_response: &'a[f32], mode: ConvolutionMode) -> Self {
         // Initialized variables for self
         let n_ir = impulse_response.len() as usize; // Lengths of Impulse
         
