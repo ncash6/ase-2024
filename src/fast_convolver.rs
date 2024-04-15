@@ -1,4 +1,4 @@
-use crate::ring_buffer::RingBuffer;
+use crate::ring_buffer::{self, RingBuffer};
 use rustfft::FftPlanner;
 use rustfft::num_complex::Complex;
 use rustfft::num_traits::Zero;
@@ -90,7 +90,9 @@ impl<'a> FastConvolver<'a> {
                     // Zero pad input block to combined length
                     let mut signal_blk = vec![Complex::zero(); combined_len];
                     for (i, &val) in input[start_blk..end_blk].iter().enumerate() {
-                        signal_blk[i] = Complex::new(val, 0.0);
+                        if let Some(signal_val) = signal_blk.get_mut(i) {
+                            *signal_val = Complex::new(val, 0.0);
+                        }  
                     }
 
                     // FFT on input signal
@@ -110,7 +112,11 @@ impl<'a> FastConvolver<'a> {
 
                     // Element-wise multiplication (convolution) in frequency domain
                     for i in 0..combined_len {
-                        signal_blk[i] *= ir_blk[i];
+                        if let Some(signal_val) = signal_blk.get_mut(i) {
+                            if let Some(ir_val) = ir_blk.get(i) {
+                                *signal_val *= ir_val;
+                            }
+                        }
                     }
 
                     // Return to time domain
@@ -126,7 +132,9 @@ impl<'a> FastConvolver<'a> {
 
                     // Convolution results stored in output buffer
                     for k in 0..blk_len {
-                        output[index_output + 1] = signal_blk[k].re;
+                        if let Some(output_val) = output.get_mut(index_output + k) {
+                            *output_val = signal_blk[k].re;
+                        }
                     }
 
                     // Shift ring buffer header by block length
